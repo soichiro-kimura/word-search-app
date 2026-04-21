@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>単語帳検索</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<div class="app_header">
+  <div class="app_header_title">単語帳検索</div>
+
+  <div class="tab">
+    <div class="tab_item tab_item_active" id="tabSearch" onclick="switchTab(false)">検索</div>
+    <div class="tab_item" id="tabMy" onclick="switchTab(true)">保存単語</div>
+  </div>
+
+  <!-- ダークモード -->
+  
+</div>
+
+<!-- ===== 検索 ===== -->
+<div id="searchPage">
+  <div class="search_box">
+    <input id="search" class="search_input" placeholder="英語 or 日本語で検索">
+
+    <div class="filter_header" onclick="toggleFilter()">
+  単語帳フィルタ <span id="filterIcon">▼</span>
+</div>
+    <div id="filters" class="filter_list">
+      
+      
+    <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="超鉄壁" checked>
+          <span>超鉄壁</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="鉄壁" checked>
+          <span>鉄壁</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="ユメタン1" checked>
+          <span>ユメタン1</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="ユメタン2" checked>
+          <span>ユメタン2</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="LEAP" checked>
+          <span>LEAP</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="システム英単語" checked>
+          <span>システム英単語</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="ターゲット1900" checked>
+          <span>ターゲット1900</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+  </div>
+  </div>
+
+  <div id="results" class="card_container"></div>
+</div>
+
+<!-- ===== マイ辞書 ===== -->
+<div id="myPage" class="hidden">
+  <div id="myResults" class="card_container"></div>
+</div>
+<div class="dark_toggle">
+    <span class="dark_toggle_label">ダーク</span>
+    <label class="dark_toggle_switch">
+      <input type="checkbox" id="darkSwitch">
+      <span class="dark_toggle_slider"></span>
+    </label>
+</div>
+<div id="toast" class="toast"></div>
+
+<!-- ===== データ ===== -->
+<!-- <script src="data/yumetan0.js"></script> -->
+<script src="data/yumetan1.js"></script>
+<script src="data/yumetan2.js"></script>
+<script src="data/choteppeki.js"></script>
+<script src="data/system.js"></script>
+<script src="data/target.js"></script>
+<script src="data/leap.js"></script>
+<script src="data/teppeki.js"></script>
+
+<script>
+
+/* ===== 初期 ===== */
+let data = window.wordData || [];
+let keyword = "";
+let dragIndex = null;
+let filterOpen = true;
+
+/* ===== ダークモード ===== */
+const darkSwitch = document.getElementById("darkSwitch");
+
+if (localStorage.getItem("darkMode") === "true") {
+  document.body.classList.add("dark");
+  darkSwitch.checked = true;
+}
+
+darkSwitch.addEventListener("change", () => {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("darkMode", darkSwitch.checked);
+});
+
+/* ===== フィルタ開閉 ===== */
+function toggleFilter(){
+  const el = document.getElementById("filters");
+  const icon = document.getElementById("filterIcon");
+
+  filterOpen = !filterOpen;
+
+  if(filterOpen){
+    el.classList.remove("filter_list_closed");
+    icon.textContent = "▼";
+  }else{
+    el.classList.add("filter_list_closed");
+    icon.textContent = "▲";
+  }
+
+  localStorage.setItem("filterOpen", filterOpen);
+}
+
+function loadFilterOpen(){
+  const saved = localStorage.getItem("filterOpen");
+  if(saved === "false"){
+    filterOpen = true;
+    toggleFilter();
+  }
+}
+
+/* ===== 単語帳カラー ===== */
+function getBookClass(book) {
+  const map = {
+    "ユメタン1": "book_yumetan1",
+    "ユメタン2": "book_yumetan2",
+    "鉄壁": "book_teppeki",
+    "超鉄壁": "book_choteppeki",
+    "LEAP": "book_leap",
+    "システム英単語": "book_system",
+    "ターゲット1900": "book_target1900",
+  };
+  return map[book] || "";
+}
+
+/* ===== 検索 ===== */
+document.getElementById("search").addEventListener("input", e=>{
+  keyword = e.target.value.trim().toLowerCase();
+  runSearch();
+});
+
+/* ===== チェック保存 ===== */
+document.querySelectorAll("#filters input").forEach(cb=>{
+  cb.addEventListener("change", ()=>{
+    saveFilterState();
+    runSearch();
+  });
+});
+
+function saveFilterState(){
+  const states = {};
+  document.querySelectorAll("#filters input").forEach(cb=>{
+    states[cb.value] = cb.checked;
+  });
+  localStorage.setItem("filterChecked", JSON.stringify(states));
+}
+
+function loadFilterState(){
+  const saved = JSON.parse(localStorage.getItem("filterChecked"));
+  if(!saved) return;
+
+  document.querySelectorAll("#filters input").forEach(cb=>{
+    if(saved[cb.value] !== undefined){
+      cb.checked = saved[cb.value];
+    }
+  });
+}
+
+/* ===== 英語判定 ===== */
+function isEnglish(text) {
+  return /^[a-zA-Z\s\-']+$/.test(text);
+}
+
+/* ===== 検索処理 ===== */
+function runSearch(){
+  if (!keyword) {
+    results.innerHTML = "";
+    return;
+  }
+
+  const checked = Array.from(document.querySelectorAll("#filters input:checked"))
+    .map(x => x.value);
+
+  const order = Array.from(document.querySelectorAll("#filters input"))
+    .map(x => x.value);
+
+  const isEng = isEnglish(keyword);
+
+  let list = data.filter(x=>{
+    if (!checked.includes(x.book)) return false;
+
+    if (isEng) {
+      return x.word.toLowerCase().includes(keyword);
+    } else {
+      return x.meaning.includes(keyword);
+    }
+  });
+
+  list.sort((a,b)=>{
+    const aWord = a.word.toLowerCase();
+    const bWord = b.word.toLowerCase();
+
+    const aExact = aWord === keyword;
+    const bExact = bWord === keyword;
+    if (aExact !== bExact) return bExact - aExact;
+
+    const aStart = aWord.startsWith(keyword);
+    const bStart = bWord.startsWith(keyword);
+    if (aStart !== bStart) return bStart - aStart;
+
+    if (aWord.length !== bWord.length) {
+      return aWord.length - bWord.length;
+    }
+
+    const aOrder = order.indexOf(a.book);
+    const bOrder = order.indexOf(b.book);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    return aWord.localeCompare(bWord);
+  });
+
+  display(list);
+}
+
+/* ===== 表示 ===== */
+function highlight(text){
+  if(!keyword) return text;
+  return text.replace(new RegExp(keyword,"gi"), m=>`<mark>${m}</mark>`);
+}
+
+function display(list){
+  results.innerHTML="";
+
+  if(list.length===0){
+    results.innerHTML='<div class="empty">見つからん</div>';
+    return;
+  }
+
+  list.forEach(x=>{
+    const div=document.createElement("div");
+    div.className="card_item";
+
+    const c = getBookClass(x.book);
+
+    div.innerHTML=`
+      <div class="card_item_word">${highlight(x.word)}</div>
+      <div class="card_item_book ${c}">${x.book}</div>
+      <div class="card_item_meaning">${highlight(x.meaning)}</div>
+      <button class="card_item_button" onclick="add('${x.word}','${x.meaning}','${x.book}')">保存</button>
+    `;
+
+    results.appendChild(div);
+  });
+}
+
+/* ===== マイ辞書 ===== */
+function add(word,meaning,book){
+  let d=JSON.parse(localStorage.getItem("myDict"))||[];
+
+  if(!d.some(x=>x.word===word&&x.meaning===meaning&&x.book===book)){
+    d.push({word,meaning,book});
+    localStorage.setItem("myDict",JSON.stringify(d));
+    toast("追加");
+  }else toast("登録済み");
+}
+
+/* ===== タブ ===== */
+function switchTab(isMy){
+  document.getElementById("searchPage").classList.toggle("hidden", isMy);
+  document.getElementById("myPage").classList.toggle("hidden", !isMy);
+
+  document.getElementById("tabSearch").classList.toggle("tab_item_active", !isMy);
+  document.getElementById("tabMy").classList.toggle("tab_item_active", isMy);
+}
+
+/* ===== トースト ===== */
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.classList.add("toast_show");
+  setTimeout(()=>t.classList.remove("toast_show"),1000);
+}
+
+/* ===== 並び順保存 ===== */
+function saveFilterOrder(){
+  const order = Array.from(document.querySelectorAll("#filters input"))
+    .map(x => x.value);
+
+  localStorage.setItem("filterOrder", JSON.stringify(order));
+}
+
+function loadFilterOrder(){
+  const saved = JSON.parse(localStorage.getItem("filterOrder"));
+  if (!saved) return;
+
+  const container = document.getElementById("filters");
+  const labels = Array.from(container.querySelectorAll("label"));
+
+  saved.forEach(book => {
+    const target = labels.find(l => l.querySelector("input").value === book);
+    if (target) container.appendChild(target);
+  });
+}
+
+/* ===== 上下ボタン ===== */
+function moveUp(btn){
+  const label = btn.closest("label");
+  const prev = label.previousElementSibling;
+  if(prev) label.parentElement.insertBefore(label, prev);
+
+  saveFilterOrder();
+  runSearch();
+}
+
+function moveDown(btn){
+  const label = btn.closest("label");
+  const next = label.nextElementSibling;
+  if(next) label.parentElement.insertBefore(next, label);
+
+  saveFilterOrder();
+  runSearch();
+}
+
+/* ===== 初期ロード（超重要） ===== */
+loadFilterState();
+loadFilterOrder();
+loadFilterOpen();
+
+</script>
+</body>
+</html>

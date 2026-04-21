@@ -1,0 +1,385 @@
+@charset "UTF-8";
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: #f2f2f7;
+  color: #111111;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.app_header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #dddddd;
+}
+.app_header_title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 30px;
+  padding: 12px;
+  letter-spacing: 0.5px;
+}
+
+.tab {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+.tab_item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: #eee;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.tab_item_active {
+  background: #007aff;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.search_box {
+  padding: 12px;
+  background: #ffffff;
+  position: sticky;
+  top: 90px;
+}
+.search_box .search_input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #dddddd;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+.search_box .search_input::-moz-placeholder {
+  color: #888888;
+}
+.search_box .search_input::placeholder {
+  color: #888888;
+}
+.search_box .filter_toggle {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #007aff;
+  font-weight: 500;
+}
+.search_box .filter_list {
+  margin-top: 10px;
+  font-size: 13px;
+}
+.search_box .filter_list label {
+  margin-right: 10px;
+}
+
+.card_container {
+  padding: 12px;
+}
+.card_item {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s;
+}
+.card_item:active {
+  transform: scale(0.97);
+}
+.card_item_word {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.card_item_book {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: 10px;
+  color: #ffffff;
+  font-weight: 500;
+}
+.card_item_book.book_yumetan1 {
+  background: #ff3b30;
+}
+.card_item_book.book_yumetan2 {
+  background: #007aff;
+}
+.card_item_book.book_teppeki {
+  background: #000000;
+}
+.card_item_book.book_choteppeki {
+  background: #ffffff;
+  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+}
+.card_item_book.book_system {
+  background: #4c7caa;
+}
+.card_item_book.book_target1900 {
+  background: #295baa;
+}
+.card_item_book.book_leap {
+  background: #0b9f89;
+}
+.card_item_meaning {
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.card_item_button {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #007aff;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.card_item_button:active {
+  opacity: 0.85;
+}
+
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: black;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  opacity: 0;
+  transition: 0.3s;
+  pointer-events: none;
+}
+.toast_show {
+  opacity: 1;
+}
+
+.hidden {
+  display: none;
+}
+
+.empty {
+  text-align: center;
+  color: #888888;
+  margin-top: 30px;
+  font-size: 13px;
+}
+
+mark {
+  background: #fff176;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+body.dark {
+  background: #000000;
+  color: #ffffff;
+}
+body.dark .app_header {
+  background: rgba(20, 20, 20, 0.9);
+  border-bottom: 1px solid #333;
+}
+body.dark .tab_item {
+  background: #222;
+  color: #ccc;
+}
+body.dark .tab_item_active {
+  background: #007aff;
+  color: #fff;
+}
+body.dark .search_box {
+  background: #111;
+}
+body.dark .search_box .search_input {
+  background: #222;
+  border: 1px solid #444;
+  color: #fff;
+}
+body.dark .search_box .search_input::-moz-placeholder {
+  color: #777;
+}
+body.dark .search_box .search_input::placeholder {
+  color: #777;
+}
+body.dark .card_item {
+  background: #111;
+  box-shadow: none;
+  border: 1px solid #222;
+}
+body.dark .card_item_word {
+  color: #fff;
+}
+body.dark .card_item_meaning {
+  color: #ddd;
+}
+body.dark .card_item .book_teppeki {
+  background: #ffffff;
+  color: #000000;
+}
+body.dark .empty {
+  color: #777;
+}
+body.dark mark {
+  background: #ffcc00;
+  color: #000;
+}
+
+.dark_toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+}
+.dark_toggle_label {
+  font-size: 13px;
+  color: #888888;
+}
+.dark_toggle_switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+}
+.dark_toggle_switch input {
+  display: none;
+}
+.dark_toggle_slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ccc;
+  border-radius: 999px;
+  transition: 0.3s;
+}
+.dark_toggle_slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+input:checked + .dark_toggle_slider {
+  background: #007aff;
+}
+input:checked + .dark_toggle_slider::before {
+  transform: translateX(18px);
+}
+
+/* ===== 並び替えボタン ===== */
+.move_btn {
+  border: none;
+  background: #e5e5ea;
+  color: #333;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  margin-left: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.move_btn:active {
+  transform: scale(0.9);
+  background: #d1d1d6;
+}
+
+/* 横並び */
+.filter_list label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+/* ボタン右寄せ */
+.filter_list label button {
+  margin-left: 5px;
+}
+
+/* ===== ダークモード ===== */
+body.dark .move_btn {
+  background: #2c2c2e;
+  color: #fff;
+}
+body.dark .move_btn:active {
+  background: #3a3a3c;
+}
+
+.filter_list label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+/* 左側（チェック＋文字） */
+.filter_left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 右側（ボタン） */
+.move_group {
+  display: flex;
+  gap: 6px;
+}
+
+/* ボタン */
+.move_btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 30%;
+  border: none;
+  background: #e5e5ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.move_btn:active {
+  transform: scale(0.9);
+}
+
+.filter_header {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #007aff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter_list {
+  overflow: hidden;
+  max-height: 500px;
+  transition: max-height 0.3s ease;
+}
+
+.filter_list_closed {
+  max-height: 0;
+}/*# sourceMappingURL=style.css.map */
