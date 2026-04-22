@@ -127,7 +127,7 @@ body {
     background: $color-white;
     border-radius: $radius-main;
     padding: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
     transition: transform 0.15s;
 
@@ -162,14 +162,14 @@ body {
     }
 
     &_meaning {
-      margin-top: 12px;
+      margin-top: 6px;
       font-size: $font-md;
       line-height: 1.6;
     }
 
     &_button {
-      margin-top: 14px;
-      padding: 10px 14px;
+      margin-top: 10px;
+      padding: 6px 11px;
       border: none;
       border-radius: $radius-small;
       background: $color-primary;
@@ -436,4 +436,20 @@ body.dark {
 
 .filter_list_closed {
   max-height: 0;
+}
+
+.backup_buttons {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.backup_buttons button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #007aff;
+  color: white;
+  font-weight: 600;
 }
