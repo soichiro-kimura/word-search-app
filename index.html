@@ -36,7 +36,7 @@
 
 <!-- ===== ヘッダー ===== -->
 <div class="app_header">
-  <div class="app_header_title">単語帳横断検索</div>
+  <div class="app_header_title" onclick="resetSearch()">単語帳横断検索</div>
 
   <div class="tab">
     <div class="tab_item tab_item_active" id="tabSearch" onclick="switchTab(false)">検索</div>
@@ -176,13 +176,23 @@
 <script src="data/leap.js"></script>
 <script src="data/teppeki.js"></script>
 
+<!-- 省略（headやHTML構造はそのままでOK） -->
+
 <script>
 
 /* ===== 初期 ===== */
-let data = window.wordData || [];
+let data = [];
 let keyword = "";
-let dragIndex = null;
 let filterOpen = true;
+window.addEventListener("load", ()=>{
+
+  data = window.wordData || [];
+
+  runSearch();
+
+});
+const results = document.getElementById("results");
+const myResults = document.getElementById("myResults");
 
 /* ===== ダークモード ===== */
 const darkSwitch = document.getElementById("darkSwitch");
@@ -204,23 +214,31 @@ function toggleFilter(){
 
   filterOpen = !filterOpen;
 
-  if(filterOpen){
-    el.classList.remove("filter_list_closed");
-    icon.textContent = "▼";
-  }else{
-    el.classList.add("filter_list_closed");
-    icon.textContent = "▲";
-  }
+  el.classList.toggle("filter_list_closed", !filterOpen);
+  icon.textContent = filterOpen ? "▼" : "▲";
 
   localStorage.setItem("filterOpen", filterOpen);
 }
+function resetSearch(){
 
+  keyword = "";
+
+  document.getElementById("search").value = "";
+
+  results.innerHTML = "";
+
+}
 function loadFilterOpen(){
   const saved = localStorage.getItem("filterOpen");
-  if(saved === "false"){
-    filterOpen = true;
-    toggleFilter();
-  }
+  if(saved === null) return;
+
+  filterOpen = (saved === "true");
+
+  const el = document.getElementById("filters");
+  const icon = document.getElementById("filterIcon");
+
+  el.classList.toggle("filter_list_closed", !filterOpen);
+  icon.textContent = filterOpen ? "▼" : "▲";
 }
 
 /* ===== 単語帳カラー ===== */
@@ -243,7 +261,7 @@ document.getElementById("search").addEventListener("input", e=>{
   runSearch();
 });
 
-/* ===== チェック保存 ===== */
+/* ===== フィルタ状態保存 ===== */
 document.querySelectorAll("#filters input").forEach(cb=>{
   cb.addEventListener("change", ()=>{
     saveFilterState();
@@ -259,30 +277,17 @@ function saveFilterState(){
   localStorage.setItem("filterChecked", JSON.stringify(states));
 }
 
-function loadMy(){
-  let d = JSON.parse(localStorage.getItem("myDict")) || [];
-  myResults.innerHTML = "";
+function loadFilterState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("filterChecked"));
+    if(!saved) return;
 
-  if(d.length === 0){
-    myResults.innerHTML = '<div class="empty">なし</div>';
-    return;
-  }
-
-  d.forEach(x=>{
-    const div = document.createElement("div");
-    div.className = "card_item";
-
-    const c = getBookClass(x.book);
-
-    div.innerHTML = `
-      <div class="card_item_word">${x.word}</div>
-      <div class="card_item_book ${c}">${x.book}</div>
-      <div class="card_item_meaning">${x.meaning}</div>
-      <button class="card_item_button" onclick="removeItem('${x.word}','${x.meaning}','${x.book}')">削除</button>
-    `;
-
-    myResults.appendChild(div);
-  });
+    document.querySelectorAll("#filters input").forEach(cb=>{
+      if(saved[cb.value] !== undefined){
+        cb.checked = saved[cb.value];
+      }
+    });
+  }catch{}
 }
 
 /* ===== 英語判定 ===== */
@@ -311,7 +316,7 @@ function runSearch(){
     if (isEng) {
       return x.word.toLowerCase().includes(keyword);
     } else {
-      return x.meaning.includes(keyword);
+      return x.meaning && x.meaning.toLowerCase().includes(keyword);
     }
   });
 
@@ -341,12 +346,24 @@ function runSearch(){
   display(list);
 }
 
-/* ===== 表示 ===== */
-function highlight(text){
-  if(!keyword) return text;
-  return text.replace(new RegExp(keyword,"gi"), m=>`<mark>${m}</mark>`);
+/* ===== ハイライト安全化 ===== */
+function escapeRegExp(str){
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function highlight(text){
+
+  if(!text) return "";
+
+  if(!keyword) return text;
+
+  const safe = escapeRegExp(keyword);
+
+  return text.replace(new RegExp(safe,"gi"), m=>`<mark>${m}</mark>`);
+
+}
+
+/* ===== 表示 ===== */
 function display(list){
   results.innerHTML="";
 
@@ -361,28 +378,147 @@ function display(list){
 
     const c = getBookClass(x.book);
 
+    const saved = isSaved(x.word, x.meaning, x.book);
+
     div.innerHTML=`
-      <div class="card_item_word">${highlight(x.word)}</div>
+      <div class="card_item_word">
+        ${highlight(x.word)}
+        ${saved ? `
+      <span class="star"
+        onclick='toggleSave(${JSON.stringify(x.word)},${JSON.stringify(x.meaning)},${JSON.stringify(x.book)})'>
+        ★
+      </span>
+    ` : ""}
+      </div>
       <div class="card_item_book ${c}">${x.book}</div>
       <div class="card_item_meaning">${highlight(x.meaning)}</div>
-      <button class="card_item_button" onclick="add('${x.word}','${x.meaning}','${x.book}')">保存</button>
     `;
 
+    const btn = document.createElement("button");
+    btn.className = "card_item_button";
+    btn.textContent = "保存";
+
+    btn.addEventListener("click", ()=>{
+
+    toggleSave(x.word, x.meaning, x.book);
+  });
+
+    div.appendChild(btn);
     results.appendChild(div);
   });
 }
 
-/* ===== マイ辞書 ===== */
-function add(word,meaning,book){
-  let d=JSON.parse(localStorage.getItem("myDict"))||[];
+/* ===== 保存 ===== */
+// function add(word,meaning,book){
+//   let d;
+//   try{
+//     d = JSON.parse(localStorage.getItem("myDict")) || [];
+//   }catch{
+//     d = [];
+//   }
 
-  if(!d.some(x=>x.word===word&&x.meaning===meaning&&x.book===book)){
-    d.push({word,meaning,book});
-    localStorage.setItem("myDict",JSON.stringify(d));
-    toast("追加");
-  }else toast("登録済み");
+//   if(!d.some(x=>x.word===word && x.meaning===meaning && x.book===book)){
+//     d.unshift({word,meaning,book});
+//     localStorage.setItem("myDict",JSON.stringify(d));
+//     showToast("追加");
+//     loadMy();
+//     runSearch();
+//   }else{
+//     showToast("登録済み");
+//   }
+// }
+
+/* ===== マイ辞書 ===== */
+function loadMy(){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  myResults.innerHTML = "";
+
+  if(d.length === 0){
+    myResults.innerHTML = '<div class="empty">なし</div>';
+    return;
+  }
+
+  d.forEach(x=>{
+    const div = document.createElement("div");
+    div.className = "card_item";
+
+    const c = getBookClass(x.book);
+
+    div.innerHTML = `
+      <div class="card_item_word">${x.word}</div>
+      <div class="card_item_book ${c}">${x.book}</div>
+      <div class="card_item_meaning">${x.meaning}</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "card_item_button";
+    btn.textContent = "削除";
+
+    btn.addEventListener("click", ()=>{
+      removeItem(x.word, x.meaning, x.book);
+    });
+
+    div.appendChild(btn);
+    myResults.appendChild(div);
+  });
 }
 
+/* ===== 削除 ===== */
+function removeItem(word,meaning,book){
+  let d = JSON.parse(localStorage.getItem("myDict")) || [];
+  d = d.filter(x => !(x.word===word && x.meaning===meaning && x.book===book));
+  localStorage.setItem("myDict", JSON.stringify(d));
+  loadMy();
+  runSearch();
+}
+function isSaved(word, meaning, book){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  return d.some(x =>
+    x.word === word &&
+    x.meaning === meaning &&
+    x.book === book
+  );
+}
+function toggleSave(word, meaning, book){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  const index = d.findIndex(x =>
+    x.word === word &&
+    x.meaning === meaning &&
+    x.book === book
+  );
+
+  if(index === -1){
+    // 追加
+    d.unshift({word, meaning, book});
+    showToast("追加");
+  }else{
+    // 削除
+    d.splice(index,1);
+    showToast("削除");
+  }
+
+  localStorage.setItem("myDict", JSON.stringify(d));
+
+  runSearch(); // ← ★表示更新
+}
 /* ===== タブ ===== */
 function switchTab(isMy){
   document.getElementById("searchPage").classList.toggle("hidden", isMy);
@@ -390,122 +526,31 @@ function switchTab(isMy){
 
   document.getElementById("tabSearch").classList.toggle("tab_item_active", !isMy);
   document.getElementById("tabMy").classList.toggle("tab_item_active", isMy);
+
   if(isMy) loadMy();
 }
-function removeItem(word,meaning,book){
+function showToast(msg){
 
-  let d = JSON.parse(localStorage.getItem("myDict")) || [];
+  const t = document.getElementById("toast");
 
-  d = d.filter(x => !(x.word===word && x.meaning===meaning && x.book===book));
+  if(!t) return;
 
-  localStorage.setItem("myDict", JSON.stringify(d));
+  t.textContent = msg;
 
-  loadMy();
-
-}
-/* ===== トースト ===== */
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
   t.classList.add("toast_show");
-  setTimeout(()=>t.classList.remove("toast_show"),1000);
+
+  setTimeout(()=>{
+
+    t.classList.remove("toast_show");
+
+  },1000);
+
 }
 
-/* ===== 並び順保存 ===== */
-function saveFilterOrder(){
-  const order = Array.from(document.querySelectorAll("#filters input"))
-    .map(x => x.value);
-
-  localStorage.setItem("filterOrder", JSON.stringify(order));
-}
-
-function loadFilterOrder(){
-  const saved = JSON.parse(localStorage.getItem("filterOrder"));
-  if (!saved) return;
-
-  const container = document.getElementById("filters");
-  const labels = Array.from(container.querySelectorAll("label"));
-
-  saved.forEach(book => {
-    const target = labels.find(l => l.querySelector("input").value === book);
-    if (target) container.appendChild(target);
-  });
-}
-
-/* ===== 上下ボタン ===== */
-function moveUp(btn){
-  const label = btn.closest("label");
-  const prev = label.previousElementSibling;
-  if(prev) label.parentElement.insertBefore(label, prev);
-
-  saveFilterOrder();
-  runSearch();
-}
-
-function moveDown(btn){
-  const label = btn.closest("label");
-  const next = label.nextElementSibling;
-  if(next) label.parentElement.insertBefore(next, label);
-
-  saveFilterOrder();
-  runSearch();
-}
-
-function exportData(){
-  const data = localStorage.getItem("myDict") || "[]";
-
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "myDict_backup.json";
-  a.click();
-
-  URL.revokeObjectURL(url);
-}
-function importData(){
-  document.getElementById("fileInput").click();
-}
-
-document.getElementById("fileInput").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = function(event){
-    try{
-      const imported = JSON.parse(event.target.result);
-      let current = JSON.parse(localStorage.getItem("myDict")) || [];
-
-      imported.forEach(item=>{
-        if(!current.some(x =>
-          x.word===item.word &&
-          x.meaning===item.meaning &&
-          x.book===item.book
-        )){
-          current.push(item);
-        }
-      });
-
-      localStorage.setItem("myDict", JSON.stringify(current));
-      alert("インポート完了（マージ）");
-      loadMy();
-
-    }catch{
-      alert("読み込み失敗");
-    }
-  };
-
-  reader.readAsText(file);
-});
-
-/* ===== 初期ロード（超重要） ===== */
+/* ===== 初期 ===== */
 loadFilterState();
-loadFilterOrder();
 loadFilterOpen();
-
+runSearch(); 
 </script>
 </body>
 </html>
