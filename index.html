@@ -206,7 +206,48 @@ darkSwitch.addEventListener("change", () => {
   document.body.classList.toggle("dark");
   localStorage.setItem("darkMode", darkSwitch.checked);
 });
+function saveOrder(){
+  const order = Array.from(document.querySelectorAll("#filters input"))
+    .map(x => x.value);
 
+  localStorage.setItem("filterOrder", JSON.stringify(order));
+}
+function loadOrder(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("filterOrder"));
+    if(!saved) return;
+
+    const container = document.getElementById("filters");
+    const items = Array.from(container.children);
+
+    saved.forEach(val=>{
+      const target = items.find(item =>
+        item.querySelector("input").value === val
+      );
+      if(target){
+        container.appendChild(target);
+      }
+    });
+
+  }catch{}
+}
+function moveUp(btn){
+  const item = btn.closest(".filter_item");
+  const prev = item.previousElementSibling;
+  if(prev){
+    item.parentNode.insertBefore(item, prev);
+  }
+  saveOrder();
+}
+
+function moveDown(btn){
+  const item = btn.closest(".filter_item");
+  const next = item.nextElementSibling;
+  if(next){
+    item.parentNode.insertBefore(next, item);
+  }
+  saveOrder();
+}
 /* ===== フィルタ開閉 ===== */
 function toggleFilter(){
   const el = document.getElementById("filters");
@@ -408,26 +449,6 @@ function display(list){
   });
 }
 
-/* ===== 保存 ===== */
-// function add(word,meaning,book){
-//   let d;
-//   try{
-//     d = JSON.parse(localStorage.getItem("myDict")) || [];
-//   }catch{
-//     d = [];
-//   }
-
-//   if(!d.some(x=>x.word===word && x.meaning===meaning && x.book===book)){
-//     d.unshift({word,meaning,book});
-//     localStorage.setItem("myDict",JSON.stringify(d));
-//     showToast("追加");
-//     loadMy();
-//     runSearch();
-//   }else{
-//     showToast("登録済み");
-//   }
-// }
-
 /* ===== マイ辞書 ===== */
 function loadMy(){
   let d;
@@ -551,6 +572,7 @@ function showToast(msg){
 loadFilterState();
 loadFilterOpen();
 runSearch(); 
+loadOrder();
 </script>
 </body>
 </html>
