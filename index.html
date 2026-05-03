@@ -527,20 +527,19 @@ function toggleSave(word, meaning, book){
   );
 
   if(index === -1){
-    // 追加
     d.unshift({word, meaning, book});
     showToast("追加");
   }else{
-    // 削除
     d.splice(index,1);
     showToast("削除");
   }
 
   localStorage.setItem("myDict", JSON.stringify(d));
 
-  runSearch(); // ← ★表示更新
-}
-/* ===== タブ ===== */
+  runSearch();
+
+  loadMy();        // マイページは常に更新
+}/* ===== タブ ===== */
 function switchTab(isMy){
   document.getElementById("searchPage").classList.toggle("hidden", isMy);
   document.getElementById("myPage").classList.toggle("hidden", !isMy);
@@ -567,12 +566,58 @@ function showToast(msg){
   },1000);
 
 }
+function exportData(){
+  const data = localStorage.getItem("myDict") || "[]";
 
+  const blob = new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "myDict.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+  showToast("エクスポート完了");
+}
+function importData(){
+  document.getElementById("fileInput").click();
+}
+
+document.getElementById("fileInput").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(){
+    try{
+      const imported = JSON.parse(reader.result);
+
+      if(!Array.isArray(imported)){
+        showToast("形式エラー");
+        return;
+      }
+
+      localStorage.setItem("myDict", JSON.stringify(imported));
+
+      loadMy();
+      runSearch();
+
+      showToast("インポート完了");
+    }catch{
+      showToast("読み込み失敗");
+    }
+  };
+
+  reader.readAsText(file);
+});
 /* ===== 初期 ===== */
 loadFilterState();
 loadFilterOpen();
-runSearch(); 
 loadOrder();
+runSearch();
 </script>
 </body>
 </html>
