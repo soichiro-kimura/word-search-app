@@ -316,7 +316,7 @@ window.wordData.push(
     { word: "utility", meaning: "有用性、実用性", book: "ユメタン1" },
     { word: "thread", meaning: "糸、筋道、脈絡", book: "ユメタン1" },
     { word: "alarm", meaning: "驚き、びっくりさせる、警報", book: "ユメタン1" },
-    { word: "contet", meaning: "前後関係、文脈、背景、状況", book: "ユメタン1" },
+    { word: "context", meaning: "前後関係、文脈、背景、状況", book: "ユメタン1" },
     { word: "phase", meaning: "段階、局面", book: "ユメタン1" },
     { word: "procedure", meaning: "手順、手続き", book: "ユメタン1" },
     { word: "menace", meaning: "脅威、危険なもの", book: "ユメタン1" },
