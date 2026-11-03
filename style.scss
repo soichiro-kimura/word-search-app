@@ -465,3 +465,22 @@ body.dark {
 .star:hover{
   transform: scale(1.2);
 }
+.anki_export_btn {
+  width: 100%;
+  height: 48px; /* 細長い形にするための高さ調整 */
+  background-image: url('anki.jpeg') !important; /* アップロードしてくれた画像ファイル名 */
+  background-size: cover;
+  background-position: center;
+  color: #ffffff; /* 文字色を白にして見やすく */
+  font-size: 15px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px; /* 角を少し丸くするよ */
+  cursor: pointer;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); /* 文字の視認性を上げる影 */
+  transition: opacity 0.2s;
+}
+
+.anki_export_btn:hover {
+  opacity: 0.9; /* ホバーしたときに少し透けさせる */
+}

@@ -50,7 +50,7 @@
 <!-- ===== 検索 ===== -->
 <div id="searchPage">
   <div class="search_box">
-    <input id="search" class="search_input" placeholder="英語 or 日本語で検索">
+    <input id="search" class="search_input" placeholder="英語 or 日本語で検索" autofocus>
 
     <div class="filter_header" onclick="toggleFilter()">
   単語帳フィルタ <span id="filterIcon">▼</span>
@@ -141,7 +141,7 @@
 </div>
 
 <!-- ===== マイ辞書 ===== -->
-  <div id="myPage" class="hidden">
+  <!-- <div id="myPage" class="hidden">
 
   <div class="backup_buttons">
 
@@ -149,13 +149,35 @@
 
     <button onclick="importData()">インポート</button>
 
+    <button onclick="exportAnki()">Anki用エクスポート</button>
+
     <input type="file" id="fileInput" hidden>
 
   </div>
 
   <div id="myResults" class="card_container"></div>
 
+  </div> -->
+
+  <div id="myPage" class="hidden">
+
+  <div class="backup_buttons" style="display: flex; flex-direction: column; gap: 10px;">
+    <!-- 上段：普通のインポート・エクスポートボタン -->
+    <div style="display: flex; gap: 10px; width: 100%;">
+      <button onclick="exportData()" style="flex: 1;">エクスポート</button>
+      <button onclick="importData()" style="flex: 1;">インポート</button>
+    </div>
+
+    <!-- 下段：画像を背景にした細長いAnkiエクスポートボタン -->
+    <button onclick="exportAnki()" class="anki_export_btn">Anki用エクスポート</button>
+
+    <input type="file" id="fileInput" hidden>
   </div>
+
+  <div id="myResults" class="card_container"></div>
+
+  </div>
+
 </div>
 <div class="dark_toggle">
     <span class="dark_toggle_label">ダーク</span>
@@ -583,6 +605,42 @@ function exportData(){
 }
 function importData(){
   document.getElementById("fileInput").click();
+}
+function exportAnki(){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  if(d.length === 0){
+    showToast("エクスポートする単語がないで");
+    return;
+  }
+
+  // Anki用のCSVデータを作成（カンマやダブルクォーテーションのエスケープも考慮）
+  let csvContent = "";
+  d.forEach(x => {
+    // 意味のところに単語帳の名前（book）も一緒に親切に入れてあげる形式にしてみたよ
+    const word = `"${x.word.replace(/"/g, '""')}"`;
+    const meaning = `"${x.meaning.replace(/"/g, '""')}"`;
+    csvContent += `${word},${meaning}\n`;
+  });
+
+  // UTF-8のBOM付きでBlobを作成（ExcelやAnkiで文字化けしにくくする）
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const blob = new Blob([bom, csvContent], {type: "text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "anki_export.csv";
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+  showToast("Anki用エクスポート完了");
 }
 
 document.getElementById("fileInput").addEventListener("change", e=>{
