@@ -21,7 +21,7 @@ body {
   text-align: center;
   font-weight: 700;
   font-size: 30px;
-  padding: 12px;
+  padding: 7px;
   letter-spacing: 0.5px;
 }
 
@@ -416,7 +416,8 @@ body.dark .move_btn:active {
   width: 100%;
   height: 48px; /* 細長い形にするための高さ調整 */
   background-image: url("anki.jpeg") !important; /* アップロードしてくれた画像ファイル名 */
-  background-size: cover;
+  background-size: 100% 350% !important;
+  background-repeat: no-repeat !important;
   background-position: center;
   color: #ffffff; /* 文字色を白にして見やすく */
   font-size: 15px;

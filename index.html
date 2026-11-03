@@ -140,25 +140,6 @@
   <div id="results" class="card_container"></div>
 </div>
 
-<!-- ===== マイ辞書 ===== -->
-  <!-- <div id="myPage" class="hidden">
-
-  <div class="backup_buttons">
-
-    <button onclick="exportData()">エクスポート</button>
-
-    <button onclick="importData()">インポート</button>
-
-    <button onclick="exportAnki()">Anki用エクスポート</button>
-
-    <input type="file" id="fileInput" hidden>
-
-  </div>
-
-  <div id="myResults" class="card_container"></div>
-
-  </div> -->
-
   <div id="myPage" class="hidden">
 
   <div class="backup_buttons" style="display: flex; flex-direction: column; gap: 10px;">
@@ -615,20 +596,19 @@ function exportAnki(){
   }
 
   if(d.length === 0){
-    showToast("エクスポートする単語がないで");
+    showToast("エクスポートする単語がありません");
     return;
   }
 
-  // Anki用のCSVデータを作成（カンマやダブルクォーテーションのエスケープも考慮）
+  // Anki用のCSVデータを作成
   let csvContent = "";
   d.forEach(x => {
-    // 意味のところに単語帳の名前（book）も一緒に親切に入れてあげる形式にしてみたよ
     const word = `"${x.word.replace(/"/g, '""')}"`;
     const meaning = `"${x.meaning.replace(/"/g, '""')}"`;
     csvContent += `${word},${meaning}\n`;
   });
 
-  // UTF-8のBOM付きでBlobを作成（ExcelやAnkiで文字化けしにくくする）
+  // UTF-8のBOM付きでBlobを作成してダウンロードを実行
   const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
   const blob = new Blob([bom, csvContent], {type: "text/csv;charset=utf-8;"});
   const url = URL.createObjectURL(blob);
@@ -640,9 +620,18 @@ function exportAnki(){
 
   URL.revokeObjectURL(url);
 
-  showToast("Anki用エクスポート完了");
+  // エクスポートが完了した後に削除の確認ダイアログを表示する
+  if(window.confirm("エクスポートが完了しました。\n保存している単語を削除しますか？\nこの操作は取り消せません。")){
+    // OKが押された場合：データを削除して画面を更新
+    localStorage.removeItem("myDict");
+    loadMy();
+    runSearch();
+    showToast("エクスポートと単語の削除が完了しました");
+  } else {
+    // キャンセルされた場合：削除せずにそのまま保持
+    showToast("エクスポートが完了しました");
+  }
 }
-
 document.getElementById("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -671,6 +660,37 @@ document.getElementById("fileInput").addEventListener("change", e=>{
 
   reader.readAsText(file);
 });
+
+/* ===== タブとスクロール位置の管理 ===== */
+let searchScrollPos = 0;
+let myScrollPos = 0;
+
+function switchTab(isMy){
+  // 今いるページのスクロール位置を保存しておく
+  if(isMy){
+    searchScrollPos = window.scrollY;
+  } else {
+    myScrollPos = window.scrollY;
+  }
+
+  // 画面（ページ）の切り替え
+  document.getElementById("searchPage").classList.toggle("hidden", isMy);
+  document.getElementById("myPage").classList.toggle("hidden", !isMy);
+
+  document.getElementById("tabSearch").classList.toggle("tab_item_active", !isMy);
+  document.getElementById("tabMy").classList.toggle("tab_item_active", isMy);
+
+  if(isMy) loadMy();
+
+  //  થોっと遅らせてから、切り替え先のスクロール位置を復元する（描画が追いつくようにするため）
+  setTimeout(() => {
+    if(isMy){
+      window.scrollTo(0, myScrollPos);
+    } else {
+      window.scrollTo(0, searchScrollPos);
+    }
+  }, 0);
+}
 /* ===== 初期 ===== */
 loadFilterState();
 loadFilterOpen();
