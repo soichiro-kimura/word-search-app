@@ -1,6 +1,6 @@
 // ===== 変数定義 =====
 // メインカラーを変えるときは、この1行を変更して style.css を再生成。
-$color-primary: #673ab7;
+$color-primary: #7440c4;
 $color-primary-light: mix(white, $color-primary, 55%);
 $color-danger: #ff3b30;
 $color-bg: #f2f2f7;
@@ -439,6 +439,47 @@ body.dark {
   overflow: hidden;
   max-height: 500px; // 開いた状態
   transition: max-height 0.3s ease;
+}
+
+.filter_list input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid $color-text-muted;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:checked {
+    border-color: var(--app-theme-color);
+    background: var(--app-theme-color);
+  }
+
+  &:checked::after {
+    content: "";
+    width: 7px;
+    height: 4px;
+    border: solid white;
+    border-width: 0 0 2px 2px;
+    transform: translateY(-1px) rotate(-45deg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--app-theme-color);
+    outline-offset: 2px;
+  }
+
+  @media (forced-colors: active) {
+    appearance: auto;
+    display: inline-block;
+
+    &:checked::after {
+      content: none;
+    }
+  }
 }
 
 .filter_list_closed {
