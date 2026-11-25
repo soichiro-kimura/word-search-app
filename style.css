@@ -1,4 +1,8 @@
 @charset "UTF-8";
+:root {
+  --app-theme-color: #673ab7;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -43,7 +47,7 @@ body {
   transition: all 0.2s;
 }
 .tab_item_active {
-  background: #007aff;
+  background: #673ab7;
   color: #ffffff;
   font-weight: 600;
 }
@@ -71,7 +75,7 @@ body {
 .search_box .filter_toggle {
   margin-top: 12px;
   font-size: 13px;
-  color: #007aff;
+  color: #673ab7;
   font-weight: 500;
 }
 .search_box .filter_list {
@@ -144,7 +148,7 @@ body {
   padding: 6px 11px;
   border: none;
   border-radius: 10px;
-  background: #007aff;
+  background: #673ab7;
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
@@ -202,7 +206,7 @@ body.dark .tab_item {
   color: #ccc;
 }
 body.dark .tab_item_active {
-  background: #007aff;
+  background: #673ab7;
   color: #fff;
 }
 body.dark .search_box {
@@ -282,7 +286,7 @@ body.dark mark {
   transition: 0.3s;
 }
 input:checked + .dark_toggle_slider {
-  background: #007aff;
+  background: #673ab7;
 }
 input:checked + .dark_toggle_slider::before {
   transform: translateX(18px);
@@ -368,7 +372,7 @@ body.dark .move_btn:active {
 .filter_header {
   margin-top: 10px;
   font-size: 14px;
-  color: #007aff;
+  color: #673ab7;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -396,7 +400,7 @@ body.dark .move_btn:active {
   padding: 10px;
   border-radius: 10px;
   border: none;
-  background: #007aff;
+  background: #673ab7;
   color: white;
   font-weight: 600;
 }
@@ -431,4 +435,172 @@ body.dark .move_btn:active {
 
 .anki_export_btn:hover {
   opacity: 0.9; /* ホバーしたときに少し透けさせる */
+}
+
+.header_row {
+  display: grid;
+  grid-template-columns: minmax(44px, 1fr) minmax(0, auto) minmax(44px, 1fr);
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-height: 59px;
+}
+
+.header_row .app_header_title {
+  padding: 7px 0;
+}
+
+.exam_countdown {
+  text-align: center;
+  font-size: clamp(10px, 3vw, 12px);
+  line-height: 1;
+  white-space: nowrap;
+}
+.exam_countdown time {
+  display: block;
+  margin-top: 4px;
+  color: #673ab7;
+  font-size: clamp(28px, 6vw, 34px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.exam_countdown time.exam_countdown_date {
+  font-size: 16px;
+}
+.exam_countdown time small {
+  margin-left: 1px;
+  font-size: 10px;
+}
+
+.search_box {
+  top: var(--app-header-height, 118px);
+}
+
+.search_row {
+  display: flex;
+  gap: 8px;
+}
+.search_row .search_input {
+  flex: 1;
+  min-width: 0;
+}
+
+.google_search {
+  flex: 0 0 48px;
+  border: 1px solid #dddddd;
+  border-radius: 14px;
+  background: #f2f2f7;
+  font-size: 18px;
+  cursor: pointer;
+}
+.google_search:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.copy_field,
+.star {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.copy_field {
+  max-width: 100%;
+  color: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.copy_field:hover {
+  text-decoration: underline;
+}
+
+.clipboard_field {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.saved_status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 10px 12px 0;
+  font-size: 13px;
+}
+
+.saved_progress {
+  --progress-fill: #673ab7;
+  --progress-track: #dfe4eb;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 5px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--progress-track);
+}
+.saved_progress::-webkit-progress-bar {
+  border-radius: inherit;
+  background: var(--progress-track);
+}
+.saved_progress::-webkit-progress-value {
+  border-radius: inherit;
+  background: var(--progress-fill);
+}
+.saved_progress::-moz-progress-bar {
+  border-radius: inherit;
+  background: var(--progress-fill);
+}
+.saved_progress[data-band="1"] {
+  --progress-fill: #008473;
+}
+.saved_progress[data-band="2"] {
+  --progress-fill: #508000;
+}
+.saved_progress[data-band="3"] {
+  --progress-fill: #a96b00;
+}
+.saved_progress[data-band="4"] {
+  --progress-fill: #d45500;
+}
+.saved_progress[data-band="5"] {
+  --progress-fill: #d9261d;
+}
+
+#savedWarning {
+  color: #a34300;
+}
+
+.toast {
+  z-index: 30;
+  width: -moz-max-content;
+  width: max-content;
+  max-width: calc(100% - 64px);
+  text-align: center;
+}
+
+body.dark .exam_countdown time,
+body.dark .filter_header,
+body.dark .search_box .filter_toggle {
+  color: rgb(186.6, 166.35, 222.6);
+}
+body.dark .google_search {
+  background: #222;
+  border-color: #444;
+}
+body.dark .saved_progress {
+  --progress-track: #343942;
+}
+body.dark #savedWarning {
+  color: #ffb67a;
 }/*# sourceMappingURL=style.css.map */

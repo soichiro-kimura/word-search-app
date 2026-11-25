@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="image.png">
 
 <!-- テーマカラー（スマホ上部の色） -->
-<meta name="theme-color" content="#0b3c6f">
+<meta name="theme-color" content="">
 
 <!-- OGP（LINE・Twitterで共有したとき） -->
 <meta property="og:title" content="単語帳横断検索">
@@ -36,7 +36,11 @@
 
 <!-- ===== ヘッダー ===== -->
 <div class="app_header">
-  <div class="app_header_title" onclick="resetSearch()">単語帳横断検索</div>
+  <div class="header_row">
+    <div class="exam_countdown"><span>共テまで</span><time datetime="2027-01-16" title="共通テスト初日 2027年1月16日"></time></div>
+    <div class="app_header_title" onclick="resetSearch()">単語帳横断検索</div>
+    <div class="exam_countdown"><span>二次まで</span><time datetime="2027-02-25" title="京都大学一般選抜の初日 2027年2月25日"></time></div>
+  </div>
 
   <div class="tab">
     <div class="tab_item tab_item_active" id="tabSearch" onclick="switchTab(false)">検索</div>
@@ -50,7 +54,10 @@
 <!-- ===== 検索 ===== -->
 <div id="searchPage">
   <div class="search_box">
-    <input id="search" class="search_input" placeholder="英語 or 日本語で検索" autofocus>
+    <div class="search_row">
+      <input id="search" class="search_input" aria-label="単語検索" placeholder="英語 or 日本語で検索" autofocus>
+      <button type="button" id="googleSearch" class="google_search" aria-label="Googleで検索（別タブ）" title="Googleで検索（別タブ）" disabled>🔍</button>
+    </div>
 
     <div class="filter_header" onclick="toggleFilter()">
   単語帳フィルタ <span id="filterIcon">▼</span>
@@ -141,6 +148,11 @@
 </div>
 
   <div id="myPage" class="hidden">
+  <div class="saved_status" id="savedStatus" role="status">
+    <strong id="savedCount"></strong>
+    <span id="savedWarning"></span>
+    <progress id="savedProgress" class="saved_progress" max="50" value="0" aria-label="保存枠の使用状況"></progress>
+  </div>
 
   <div class="backup_buttons" style="display: flex; flex-direction: column; gap: 10px;">
     <!-- 上段：普通のインポート・エクスポートボタン -->
@@ -159,7 +171,6 @@
 
   </div>
 
-</div>
 <div class="dark_toggle">
     <span class="dark_toggle_label">ダーク</span>
     <label class="dark_toggle_switch">
@@ -167,7 +178,7 @@
       <span class="dark_toggle_slider"></span>
     </label>
 </div>
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status"></div>
 
 <!-- ===== データ ===== -->
 <!-- <script src="data/yumetan0.js"></script> -->
@@ -184,9 +195,62 @@
 <script>
 
 /* ===== 初期 ===== */
+const themeColor = getComputedStyle(document.documentElement).getPropertyValue("--app-theme-color").trim();
+if (themeColor) document.querySelector('meta[name="theme-color"]').content = themeColor;
+
 let data = [];
 let keyword = "";
 let filterOpen = true;
+const SAVE_LIMIT = 50;
+const SAVE_WARNING = 48;
+const searchInput = document.getElementById("search");
+const googleSearch = document.getElementById("googleSearch");
+const examDates = document.querySelectorAll(".exam_countdown time");
+const tokyoDate = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit"
+});
+
+let countdownDay;
+function updateCountdown(now = new Date()) {
+  const parts = Object.fromEntries(tokyoDate.formatToParts(now).map(({type, value}) => [type, value]));
+  const today = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+  if (today === countdownDay) return;
+  countdownDay = today;
+  examDates.forEach(el => {
+    const days = (Date.parse(el.dateTime) - today) / 86400000;
+    el.classList.toggle("exam_countdown_date", days <= 0);
+    el.textContent = days > 0 ? String(days) : days === 0 ? "当日" : "終了";
+    if (days > 0) {
+      const unit = document.createElement("small");
+      unit.textContent = "日";
+      el.appendChild(unit);
+    }
+  });
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+const header = document.querySelector(".app_header");
+if (typeof ResizeObserver !== "undefined") {
+  new ResizeObserver(() => {
+    document.documentElement.style.setProperty("--app-header-height", header.offsetHeight + "px");
+  }).observe(header);
+}
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) updateCountdown();
+});
+
+function updateGoogleSearch(){
+  googleSearch.disabled = !searchInput.value.trim();
+}
+
+googleSearch.addEventListener("click", () => {
+  const query = searchInput.value.trim();
+  if (!query) return;
+  const params = new URLSearchParams({q: query});
+  window.open(`https://www.google.com/search?${params}`, "_blank", "noopener,noreferrer");
+});
+window.addEventListener("pageshow", updateGoogleSearch);
 window.addEventListener("load", ()=>{
 
   data = window.wordData || [];
@@ -267,7 +331,8 @@ function resetSearch(){
 
   keyword = "";
 
-  document.getElementById("search").value = "";
+  searchInput.value = "";
+  updateGoogleSearch();
 
   results.innerHTML = "";
 
@@ -300,8 +365,9 @@ function getBookClass(book) {
 }
 
 /* ===== 検索 ===== */
-document.getElementById("search").addEventListener("input", e=>{
-  keyword = e.target.value.trim().toLowerCase();
+searchInput.addEventListener("input", ()=>{
+  keyword = searchInput.value.trim().toLowerCase();
+  updateGoogleSearch();
   runSearch();
 });
 
@@ -395,163 +461,202 @@ function escapeRegExp(str){
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function highlight(text){
-
-  if(!text) return "";
-
-  if(!keyword) return text;
-
-  const safe = escapeRegExp(keyword);
-
-  return text.replace(new RegExp(safe,"gi"), m=>`<mark>${m}</mark>`);
-
-}
-
-/* ===== 表示 ===== */
-function display(list){
-  results.innerHTML="";
-
-  if(list.length===0){
-    results.innerHTML='<div class="empty">見つからん</div>';
+function appendHighlightedText(element, text, query){
+  if (!query) {
+    element.textContent = text;
     return;
   }
 
-  list.forEach(x=>{
-    const div=document.createElement("div");
-    div.className="card_item";
+  const matches = text.matchAll(new RegExp(escapeRegExp(query), "gi"));
+  let offset = 0;
+  for (const match of matches) {
+    const mark = document.createElement("mark");
+    mark.textContent = match[0];
+    element.append(text.slice(offset, match.index), mark);
+    offset = match.index + match[0].length;
+  }
+  element.append(text.slice(offset));
+}
 
-    const c = getBookClass(x.book);
+async function copyText(text, label){
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // ローカルファイルなど、Clipboard API が使えない環境向け
+    const focused = document.activeElement;
+    const field = document.createElement("textarea");
+    field.className = "clipboard_field";
+    field.value = text;
+    field.readOnly = true;
+    document.body.appendChild(field);
+    field.select();
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } catch {
+      // ブラウザーがコピーを許可しない場合は失敗を表示
+    } finally {
+      field.remove();
+      focused?.focus({preventScroll: true});
+    }
+    if (!copied) {
+      showToast("コピーできませんでした");
+      return;
+    }
+  }
+  showToast(`${label}をコピーしました`);
+}
 
-    const saved = isSaved(x.word, x.meaning, x.book);
+function createCopyField(text, label, query){
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "copy_field";
+  button.title = `${label}をコピー`;
+  appendHighlightedText(button, text ?? "", query);
+  button.disabled = !text;
+  button.addEventListener("click", () => copyText(text, label));
+  return button;
+}
 
-    div.innerHTML=`
-      <div class="card_item_word">
-        ${highlight(x.word)}
-        ${saved ? `
-      <span class="star"
-        onclick='toggleSave(${JSON.stringify(x.word)},${JSON.stringify(x.meaning)},${JSON.stringify(x.book)})'>
-        ★
-      </span>
-    ` : ""}
-      </div>
-      <div class="card_item_book ${c}">${x.book}</div>
-      <div class="card_item_meaning">${highlight(x.meaning)}</div>
-    `;
+function renderCard(entry, isMy, saved = false){
+  const {word, meaning, book} = entry;
+  const query = isMy ? "" : keyword;
+  const card = document.createElement("div");
+  card.className = "card_item";
 
-    const btn = document.createElement("button");
-    btn.className = "card_item_button";
-    btn.textContent = "保存";
+  const heading = document.createElement("div");
+  heading.className = "card_item_word";
+  heading.appendChild(createCopyField(word, "単語", query));
+  if (saved) {
+    const star = document.createElement("button");
+    star.type = "button";
+    star.className = "star";
+    star.textContent = "★";
+    star.setAttribute("aria-label", "保存単語から削除");
+    star.addEventListener("click", () => removeItem(word, meaning, book));
+    heading.appendChild(star);
+  }
 
-    btn.addEventListener("click", ()=>{
+  const badge = document.createElement("div");
+  badge.className = `card_item_book ${getBookClass(book)}`;
+  badge.textContent = book;
 
-    toggleSave(x.word, x.meaning, x.book);
+  const definition = document.createElement("div");
+  definition.className = "card_item_meaning";
+  if (meaning) definition.appendChild(createCopyField(meaning, "意味", query));
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "card_item_button";
+  button.textContent = isMy || saved ? "削除" : "保存";
+  button.addEventListener("click", () => {
+    if (isMy) removeItem(word, meaning, book);
+    else toggleSave(word, meaning, book);
   });
 
-    div.appendChild(btn);
-    results.appendChild(div);
+  card.append(heading, badge, definition, button);
+  return card;
+}
+
+function display(list){
+  results.innerHTML = "";
+  if (list.length === 0) {
+    results.innerHTML = '<div class="empty">見つからん</div>';
+    return;
+  }
+
+  const saved = readSaved();
+  list.forEach(entry => {
+    results.appendChild(renderCard(entry, false, saved.some(item => sameEntry(item, entry))));
   });
 }
 
 /* ===== マイ辞書 ===== */
-function loadMy(){
-  let d;
-  try{
-    d = JSON.parse(localStorage.getItem("myDict")) || [];
-  }catch{
-    d = [];
+function readSaved(){
+  try {
+    const entries = JSON.parse(localStorage.getItem("myDict"));
+    return Array.isArray(entries) ? entries : [];
+  } catch {
+    return [];
   }
+}
 
+function sameEntry(a, b){
+  return a && a.word === b.word && (a.meaning ?? "") === (b.meaning ?? "") && a.book === b.book;
+}
+
+function limitMessage(count){
+  return count >= SAVE_LIMIT
+    ? "保存上限に達しました。追加するには保存単語を削除してください。"
+    : `保存上限まであと${SAVE_LIMIT - count}件です。`;
+}
+
+function loadMy(){
+  const saved = readSaved();
+  const progress = document.getElementById("savedProgress");
+  progress.max = SAVE_LIMIT;
+  progress.value = Math.min(saved.length, SAVE_LIMIT);
+  progress.dataset.band = Math.floor(progress.value / 10);
+  document.getElementById("savedCount").textContent = `保存単語 ${saved.length} / ${SAVE_LIMIT}件`;
+  document.getElementById("savedWarning").textContent =
+    saved.length >= SAVE_WARNING ? limitMessage(saved.length) : "";
   myResults.innerHTML = "";
 
-  if(d.length === 0){
+  if (saved.length === 0) {
     myResults.innerHTML = '<div class="empty">なし</div>';
     return;
   }
 
-  d.forEach(x=>{
-    const div = document.createElement("div");
-    div.className = "card_item";
-
-    const c = getBookClass(x.book);
-
-    div.innerHTML = `
-      <div class="card_item_word">${x.word}</div>
-      <div class="card_item_book ${c}">${x.book}</div>
-      <div class="card_item_meaning">${x.meaning}</div>
-    `;
-
-    const btn = document.createElement("button");
-    btn.className = "card_item_button";
-    btn.textContent = "削除";
-
-    btn.addEventListener("click", ()=>{
-      removeItem(x.word, x.meaning, x.book);
-    });
-
-    div.appendChild(btn);
-    myResults.appendChild(div);
+  saved.forEach(entry => {
+    if (entry && typeof entry.word === "string") myResults.appendChild(renderCard(entry, true));
   });
 }
 
-/* ===== 削除 ===== */
-function removeItem(word,meaning,book){
-  let d = JSON.parse(localStorage.getItem("myDict")) || [];
-  d = d.filter(x => !(x.word===word && x.meaning===meaning && x.book===book));
-  localStorage.setItem("myDict", JSON.stringify(d));
+function writeSaved(entries){
+  try {
+    localStorage.setItem("myDict", JSON.stringify(entries));
+    return true;
+  } catch {
+    showToast("保存内容を更新できませんでした");
+    return false;
+  }
+}
+
+function refreshSaved(){
   loadMy();
   runSearch();
 }
-function isSaved(word, meaning, book){
-  let d;
-  try{
-    d = JSON.parse(localStorage.getItem("myDict")) || [];
-  }catch{
-    d = [];
-  }
 
-  return d.some(x =>
-    x.word === word &&
-    x.meaning === meaning &&
-    x.book === book
-  );
+function removeItem(word, meaning, book){
+  const saved = readSaved().filter(entry => !sameEntry(entry, {word, meaning, book}));
+  if (!writeSaved(saved)) return;
+  refreshSaved();
+  showToast("削除");
 }
+
 function toggleSave(word, meaning, book){
-  let d;
-  try{
-    d = JSON.parse(localStorage.getItem("myDict")) || [];
-  }catch{
-    d = [];
+  const saved = readSaved();
+  const entry = {word, meaning, book};
+  if (saved.some(item => sameEntry(item, entry))) {
+    removeItem(word, meaning, book);
+    return;
+  }
+  if (saved.length >= SAVE_LIMIT) {
+    showToast(limitMessage(saved.length));
+    return;
   }
 
-  const index = d.findIndex(x =>
-    x.word === word &&
-    x.meaning === meaning &&
-    x.book === book
-  );
-
-  if(index === -1){
-    d.unshift({word, meaning, book});
-    showToast("追加");
-  }else{
-    d.splice(index,1);
-    showToast("削除");
-  }
-
-  localStorage.setItem("myDict", JSON.stringify(d));
-
-  runSearch();
-
-  loadMy();        // マイページは常に更新
-}/* ===== タブ ===== */
-function switchTab(isMy){
-  document.getElementById("searchPage").classList.toggle("hidden", isMy);
-  document.getElementById("myPage").classList.toggle("hidden", !isMy);
-
-  document.getElementById("tabSearch").classList.toggle("tab_item_active", !isMy);
-  document.getElementById("tabMy").classList.toggle("tab_item_active", isMy);
-
-  if(isMy) loadMy();
+  saved.unshift(entry);
+  if (!writeSaved(saved)) return;
+  refreshSaved();
+  showToast(saved.length >= SAVE_WARNING ? `追加しました。${limitMessage(saved.length)}` : "追加");
 }
+
+window.addEventListener("storage", event => {
+  if (event.key === "myDict" || event.key === null) refreshSaved();
+});
+
+let toastTimer;
 function showToast(msg){
 
   const t = document.getElementById("toast");
@@ -562,11 +667,8 @@ function showToast(msg){
 
   t.classList.add("toast_show");
 
-  setTimeout(()=>{
-
-    t.classList.remove("toast_show");
-
-  },1000);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("toast_show"), 2600);
 
 }
 function exportData(){
@@ -588,12 +690,7 @@ function importData(){
   document.getElementById("fileInput").click();
 }
 function exportAnki(){
-  let d;
-  try{
-    d = JSON.parse(localStorage.getItem("myDict")) || [];
-  }catch{
-    d = [];
-  }
+  const d = readSaved();
 
   if(d.length === 0){
     showToast("エクスポートする単語がありません");
@@ -603,8 +700,9 @@ function exportAnki(){
   // Anki用のCSVデータを作成
   let csvContent = "";
   d.forEach(x => {
+    if (!x || typeof x.word !== "string") return;
     const word = `"${x.word.replace(/"/g, '""')}"`;
-    const meaning = `"${x.meaning.replace(/"/g, '""')}"`;
+    const meaning = `"${(x.meaning ?? "").replace(/"/g, '""')}"`;
     csvContent += `${word},${meaning}\n`;
   });
 
@@ -635,6 +733,7 @@ function exportAnki(){
 document.getElementById("fileInput").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
+  e.target.value = "";
 
   const reader = new FileReader();
 
@@ -642,22 +741,44 @@ document.getElementById("fileInput").addEventListener("change", e=>{
     try{
       const imported = JSON.parse(reader.result);
 
-      if(!Array.isArray(imported)){
-        showToast("形式エラー");
+      if (!Array.isArray(imported) || !imported.every(entry =>
+        entry && typeof entry.word === "string" && entry.word.trim() &&
+        typeof entry.book === "string" &&
+        (entry.meaning == null || typeof entry.meaning === "string")
+      )) {
+        showToast("単語データの形式が正しくありません");
         return;
       }
 
-      localStorage.setItem("myDict", JSON.stringify(imported));
+      const saved = readSaved();
+      const additions = [];
+      for (const entry of imported) {
+        if (saved.some(item => sameEntry(item, entry)) ||
+            additions.some(item => sameEntry(item, entry))) continue;
+        if (saved.length + additions.length >= SAVE_LIMIT) {
+          showToast("50件を超えるためインポートできません");
+          return;
+        }
+        additions.push(entry);
+      }
 
-      loadMy();
-      runSearch();
+      if (!additions.length) {
+        showToast("追加する単語はありません");
+        return;
+      }
 
-      showToast("インポート完了");
+      const merged = [...saved, ...additions];
+      if (!writeSaved(merged)) return;
+      refreshSaved();
+      showToast(merged.length >= SAVE_WARNING
+        ? `${additions.length}件を追加しました。${limitMessage(merged.length)}`
+        : `${additions.length}件をインポートしました`);
     }catch{
       showToast("読み込み失敗");
     }
   };
 
+  reader.onerror = () => showToast("読み込み失敗");
   reader.readAsText(file);
 });
 
@@ -695,6 +816,8 @@ function switchTab(isMy){
 loadFilterState();
 loadFilterOpen();
 loadOrder();
+updateGoogleSearch();
+loadMy();
 runSearch();
 </script>
 </body>

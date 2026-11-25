@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>単語帳横断検索</title>
+
+<!-- 説明（SEO） -->
+<meta name="description" content="複数の英単語帳（鉄壁・ユメタン・LEAPなど）を横断して検索できる学習ツール">
+
+<!-- ファビコン -->
+<link rel="icon" href="image.png" type="image/png">
+<link rel="apple-touch-icon" href="image.png">
+
+<!-- テーマカラー（スマホ上部の色） -->
+<meta name="theme-color" content="#0b3c6f">
+
+<!-- OGP（LINE・Twitterで共有したとき） -->
+<meta property="og:title" content="単語帳横断検索">
+<meta property="og:description" content="複数の単語帳をまとめて検索できる学習ツール">
+<meta property="og:image" content="image.png">
+<meta property="og:type" content="website">
+
+<!-- Twitter用 -->
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- フォント（任意） -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- CSS -->
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<div class="app_header">
+  <div class="app_header_title" onclick="resetSearch()">単語帳横断検索</div>
+
+  <div class="tab">
+    <div class="tab_item tab_item_active" id="tabSearch" onclick="switchTab(false)">検索</div>
+    <div class="tab_item" id="tabMy" onclick="switchTab(true)">保存単語</div>
+  </div>
+
+  <!-- ダークモード -->
+  
+</div>
+
+<!-- ===== 検索 ===== -->
+<div id="searchPage">
+  <div class="search_box">
+    <input id="search" class="search_input" placeholder="英語 or 日本語で検索" autofocus>
+
+    <div class="filter_header" onclick="toggleFilter()">
+  単語帳フィルタ <span id="filterIcon">▼</span>
+</div>
+    <div id="filters" class="filter_list">
+      
+      
+    <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="超鉄壁" checked>
+          <span>超鉄壁</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="鉄壁" checked>
+          <span>鉄壁</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="ユメタン1" checked>
+          <span>ユメタン1</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="ユメタン2" checked>
+          <span>ユメタン2</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="LEAP" checked>
+          <span>LEAP</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="システム英単語" checked>
+          <span>システム英単語</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+
+      <label class="filter_item" draggable="true">
+        <div class="filter_left">
+          <input type="checkbox" value="ターゲット1900" checked>
+          <span>ターゲット1900</span>
+        </div>
+        <div class="move_group">
+          <button type="button" class="move_btn" onclick="moveUp(this)">▲</button>
+          <button type="button" class="move_btn" onclick="moveDown(this)">▼</button>
+        </div>
+      </label>
+  </div>
+  </div>
+
+  <div id="results" class="card_container"></div>
+</div>
+
+  <div id="myPage" class="hidden">
+
+  <div class="backup_buttons" style="display: flex; flex-direction: column; gap: 10px;">
+    <!-- 上段：普通のインポート・エクスポートボタン -->
+    <div style="display: flex; gap: 10px; width: 100%;">
+      <button onclick="exportData()" style="flex: 1;">エクスポート</button>
+      <button onclick="importData()" style="flex: 1;">インポート</button>
+    </div>
+
+    <!-- 下段：画像を背景にした細長いAnkiエクスポートボタン -->
+    <button onclick="exportAnki()" class="anki_export_btn">Anki用エクスポート</button>
+
+    <input type="file" id="fileInput" hidden>
+  </div>
+
+  <div id="myResults" class="card_container"></div>
+
+  </div>
+
+</div>
+<div class="dark_toggle">
+    <span class="dark_toggle_label">ダーク</span>
+    <label class="dark_toggle_switch">
+      <input type="checkbox" id="darkSwitch">
+      <span class="dark_toggle_slider"></span>
+    </label>
+</div>
+<div id="toast" class="toast"></div>
+
+<!-- ===== データ ===== -->
+<!-- <script src="data/yumetan0.js"></script> -->
+<script src="data/yumetan1.js"></script>
+<script src="data/yumetan2.js"></script>
+<script src="data/choteppeki.js"></script>
+<script src="data/system.js"></script>
+<script src="data/target.js"></script>
+<script src="data/leap.js"></script>
+<script src="data/teppeki.js"></script>
+
+<!-- 省略（headやHTML構造はそのままでOK） -->
+
+<script>
+
+/* ===== 初期 ===== */
+let data = [];
+let keyword = "";
+let filterOpen = true;
+window.addEventListener("load", ()=>{
+
+  data = window.wordData || [];
+
+  runSearch();
+
+});
+const results = document.getElementById("results");
+const myResults = document.getElementById("myResults");
+
+/* ===== ダークモード ===== */
+const darkSwitch = document.getElementById("darkSwitch");
+
+if (localStorage.getItem("darkMode") === "true") {
+  document.body.classList.add("dark");
+  darkSwitch.checked = true;
+}
+
+darkSwitch.addEventListener("change", () => {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("darkMode", darkSwitch.checked);
+});
+function saveOrder(){
+  const order = Array.from(document.querySelectorAll("#filters input"))
+    .map(x => x.value);
+
+  localStorage.setItem("filterOrder", JSON.stringify(order));
+}
+function loadOrder(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("filterOrder"));
+    if(!saved) return;
+
+    const container = document.getElementById("filters");
+    const items = Array.from(container.children);
+
+    saved.forEach(val=>{
+      const target = items.find(item =>
+        item.querySelector("input").value === val
+      );
+      if(target){
+        container.appendChild(target);
+      }
+    });
+
+  }catch{}
+}
+function moveUp(btn){
+  const item = btn.closest(".filter_item");
+  const prev = item.previousElementSibling;
+  if(prev){
+    item.parentNode.insertBefore(item, prev);
+  }
+  saveOrder();
+}
+
+function moveDown(btn){
+  const item = btn.closest(".filter_item");
+  const next = item.nextElementSibling;
+  if(next){
+    item.parentNode.insertBefore(next, item);
+  }
+  saveOrder();
+}
+/* ===== フィルタ開閉 ===== */
+function toggleFilter(){
+  const el = document.getElementById("filters");
+  const icon = document.getElementById("filterIcon");
+
+  filterOpen = !filterOpen;
+
+  el.classList.toggle("filter_list_closed", !filterOpen);
+  icon.textContent = filterOpen ? "▼" : "▲";
+
+  localStorage.setItem("filterOpen", filterOpen);
+}
+function resetSearch(){
+
+  keyword = "";
+
+  document.getElementById("search").value = "";
+
+  results.innerHTML = "";
+
+}
+function loadFilterOpen(){
+  const saved = localStorage.getItem("filterOpen");
+  if(saved === null) return;
+
+  filterOpen = (saved === "true");
+
+  const el = document.getElementById("filters");
+  const icon = document.getElementById("filterIcon");
+
+  el.classList.toggle("filter_list_closed", !filterOpen);
+  icon.textContent = filterOpen ? "▼" : "▲";
+}
+
+/* ===== 単語帳カラー ===== */
+function getBookClass(book) {
+  const map = {
+    "ユメタン1": "book_yumetan1",
+    "ユメタン2": "book_yumetan2",
+    "鉄壁": "book_teppeki",
+    "超鉄壁": "book_choteppeki",
+    "LEAP": "book_leap",
+    "システム英単語": "book_system",
+    "ターゲット1900": "book_target1900",
+  };
+  return map[book] || "";
+}
+
+/* ===== 検索 ===== */
+document.getElementById("search").addEventListener("input", e=>{
+  keyword = e.target.value.trim().toLowerCase();
+  runSearch();
+});
+
+/* ===== フィルタ状態保存 ===== */
+document.querySelectorAll("#filters input").forEach(cb=>{
+  cb.addEventListener("change", ()=>{
+    saveFilterState();
+    runSearch();
+  });
+});
+
+function saveFilterState(){
+  const states = {};
+  document.querySelectorAll("#filters input").forEach(cb=>{
+    states[cb.value] = cb.checked;
+  });
+  localStorage.setItem("filterChecked", JSON.stringify(states));
+}
+
+function loadFilterState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("filterChecked"));
+    if(!saved) return;
+
+    document.querySelectorAll("#filters input").forEach(cb=>{
+      if(saved[cb.value] !== undefined){
+        cb.checked = saved[cb.value];
+      }
+    });
+  }catch{}
+}
+
+/* ===== 英語判定 ===== */
+function isEnglish(text) {
+  return /^[a-zA-Z\s\-']+$/.test(text);
+}
+
+/* ===== 検索処理 ===== */
+function runSearch(){
+  if (!keyword) {
+    results.innerHTML = "";
+    return;
+  }
+
+  const checked = Array.from(document.querySelectorAll("#filters input:checked"))
+    .map(x => x.value);
+
+  const order = Array.from(document.querySelectorAll("#filters input"))
+    .map(x => x.value);
+
+  const isEng = isEnglish(keyword);
+
+  let list = data.filter(x=>{
+    if (!checked.includes(x.book)) return false;
+
+    if (isEng) {
+      return x.word.toLowerCase().includes(keyword);
+    } else {
+      return x.meaning && x.meaning.toLowerCase().includes(keyword);
+    }
+  });
+
+  list.sort((a,b)=>{
+    const aWord = a.word.toLowerCase();
+    const bWord = b.word.toLowerCase();
+
+    const aExact = aWord === keyword;
+    const bExact = bWord === keyword;
+    if (aExact !== bExact) return bExact - aExact;
+
+    const aStart = aWord.startsWith(keyword);
+    const bStart = bWord.startsWith(keyword);
+    if (aStart !== bStart) return bStart - aStart;
+
+    if (aWord.length !== bWord.length) {
+      return aWord.length - bWord.length;
+    }
+
+    const aOrder = order.indexOf(a.book);
+    const bOrder = order.indexOf(b.book);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    return aWord.localeCompare(bWord);
+  });
+
+  display(list);
+}
+
+/* ===== ハイライト安全化 ===== */
+function escapeRegExp(str){
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlight(text){
+
+  if(!text) return "";
+
+  if(!keyword) return text;
+
+  const safe = escapeRegExp(keyword);
+
+  return text.replace(new RegExp(safe,"gi"), m=>`<mark>${m}</mark>`);
+
+}
+
+/* ===== 表示 ===== */
+function display(list){
+  results.innerHTML="";
+
+  if(list.length===0){
+    results.innerHTML='<div class="empty">見つからん</div>';
+    return;
+  }
+
+  list.forEach(x=>{
+    const div=document.createElement("div");
+    div.className="card_item";
+
+    const c = getBookClass(x.book);
+
+    const saved = isSaved(x.word, x.meaning, x.book);
+
+    div.innerHTML=`
+      <div class="card_item_word">
+        ${highlight(x.word)}
+        ${saved ? `
+      <span class="star"
+        onclick='toggleSave(${JSON.stringify(x.word)},${JSON.stringify(x.meaning)},${JSON.stringify(x.book)})'>
+        ★
+      </span>
+    ` : ""}
+      </div>
+      <div class="card_item_book ${c}">${x.book}</div>
+      <div class="card_item_meaning">${highlight(x.meaning)}</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "card_item_button";
+    btn.textContent = "保存";
+
+    btn.addEventListener("click", ()=>{
+
+    toggleSave(x.word, x.meaning, x.book);
+  });
+
+    div.appendChild(btn);
+    results.appendChild(div);
+  });
+}
+
+/* ===== マイ辞書 ===== */
+function loadMy(){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  myResults.innerHTML = "";
+
+  if(d.length === 0){
+    myResults.innerHTML = '<div class="empty">なし</div>';
+    return;
+  }
+
+  d.forEach(x=>{
+    const div = document.createElement("div");
+    div.className = "card_item";
+
+    const c = getBookClass(x.book);
+
+    div.innerHTML = `
+      <div class="card_item_word">${x.word}</div>
+      <div class="card_item_book ${c}">${x.book}</div>
+      <div class="card_item_meaning">${x.meaning}</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "card_item_button";
+    btn.textContent = "削除";
+
+    btn.addEventListener("click", ()=>{
+      removeItem(x.word, x.meaning, x.book);
+    });
+
+    div.appendChild(btn);
+    myResults.appendChild(div);
+  });
+}
+
+/* ===== 削除 ===== */
+function removeItem(word,meaning,book){
+  let d = JSON.parse(localStorage.getItem("myDict")) || [];
+  d = d.filter(x => !(x.word===word && x.meaning===meaning && x.book===book));
+  localStorage.setItem("myDict", JSON.stringify(d));
+  loadMy();
+  runSearch();
+}
+function isSaved(word, meaning, book){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  return d.some(x =>
+    x.word === word &&
+    x.meaning === meaning &&
+    x.book === book
+  );
+}
+function toggleSave(word, meaning, book){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  const index = d.findIndex(x =>
+    x.word === word &&
+    x.meaning === meaning &&
+    x.book === book
+  );
+
+  if(index === -1){
+    d.unshift({word, meaning, book});
+    showToast("追加");
+  }else{
+    d.splice(index,1);
+    showToast("削除");
+  }
+
+  localStorage.setItem("myDict", JSON.stringify(d));
+
+  runSearch();
+
+  loadMy();        // マイページは常に更新
+}/* ===== タブ ===== */
+function switchTab(isMy){
+  document.getElementById("searchPage").classList.toggle("hidden", isMy);
+  document.getElementById("myPage").classList.toggle("hidden", !isMy);
+
+  document.getElementById("tabSearch").classList.toggle("tab_item_active", !isMy);
+  document.getElementById("tabMy").classList.toggle("tab_item_active", isMy);
+
+  if(isMy) loadMy();
+}
+function showToast(msg){
+
+  const t = document.getElementById("toast");
+
+  if(!t) return;
+
+  t.textContent = msg;
+
+  t.classList.add("toast_show");
+
+  setTimeout(()=>{
+
+    t.classList.remove("toast_show");
+
+  },1000);
+
+}
+function exportData(){
+  const data = localStorage.getItem("myDict") || "[]";
+
+  const blob = new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "myDict.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+  showToast("エクスポート完了");
+}
+function importData(){
+  document.getElementById("fileInput").click();
+}
+function exportAnki(){
+  let d;
+  try{
+    d = JSON.parse(localStorage.getItem("myDict")) || [];
+  }catch{
+    d = [];
+  }
+
+  if(d.length === 0){
+    showToast("エクスポートする単語がありません");
+    return;
+  }
+
+  // Anki用のCSVデータを作成
+  let csvContent = "";
+  d.forEach(x => {
+    const word = `"${x.word.replace(/"/g, '""')}"`;
+    const meaning = `"${x.meaning.replace(/"/g, '""')}"`;
+    csvContent += `${word},${meaning}\n`;
+  });
+
+  // UTF-8のBOM付きでBlobを作成してダウンロードを実行
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const blob = new Blob([bom, csvContent], {type: "text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "anki_export.csv";
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+  // エクスポートが完了した後に削除の確認ダイアログを表示する
+  if(window.confirm("エクスポートが完了しました。\n保存している単語を削除しますか？\nこの操作は取り消せません。")){
+    // OKが押された場合：データを削除して画面を更新
+    localStorage.removeItem("myDict");
+    loadMy();
+    runSearch();
+    showToast("エクスポートと単語の削除が完了しました");
+  } else {
+    // キャンセルされた場合：削除せずにそのまま保持
+    showToast("エクスポートが完了しました");
+  }
+}
+document.getElementById("fileInput").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(){
+    try{
+      const imported = JSON.parse(reader.result);
+
+      if(!Array.isArray(imported)){
+        showToast("形式エラー");
+        return;
+      }
+
+      localStorage.setItem("myDict", JSON.stringify(imported));
+
+      loadMy();
+      runSearch();
+
+      showToast("インポート完了");
+    }catch{
+      showToast("読み込み失敗");
+    }
+  };
+
+  reader.readAsText(file);
+});
+
+/* ===== タブとスクロール位置の管理 ===== */
+let searchScrollPos = 0;
+let myScrollPos = 0;
+
+function switchTab(isMy){
+  // 今いるページのスクロール位置を保存しておく
+  if(isMy){
+    searchScrollPos = window.scrollY;
+  } else {
+    myScrollPos = window.scrollY;
+  }
+
+  // 画面（ページ）の切り替え
+  document.getElementById("searchPage").classList.toggle("hidden", isMy);
+  document.getElementById("myPage").classList.toggle("hidden", !isMy);
+
+  document.getElementById("tabSearch").classList.toggle("tab_item_active", !isMy);
+  document.getElementById("tabMy").classList.toggle("tab_item_active", isMy);
+
+  if(isMy) loadMy();
+
+  //  થોっと遅らせてから、切り替え先のスクロール位置を復元する（描画が追いつくようにするため）
+  setTimeout(() => {
+    if(isMy){
+      window.scrollTo(0, myScrollPos);
+    } else {
+      window.scrollTo(0, searchScrollPos);
+    }
+  }, 0);
+}
+/* ===== 初期 ===== */
+loadFilterState();
+loadFilterOpen();
+loadOrder();
+runSearch();
+</script>
+</body>
+</html>

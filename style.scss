@@ -1,5 +1,7 @@
 // ===== 変数定義 =====
-$color-primary: #007aff;
+// メインカラーを変えるときは、この1行を変更して style.css を再生成。
+$color-primary: #673ab7;
+$color-primary-light: mix(white, $color-primary, 55%);
 $color-danger: #ff3b30;
 $color-bg: #f2f2f7;
 $color-white: #ffffff;
@@ -26,6 +28,10 @@ $font-xs: 12px;
 }
 
 // ===== ベース =====
+:root {
+  --app-theme-color: #{$color-primary};
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -422,7 +428,7 @@ body.dark {
 .filter_header {
   margin-top: 10px;
   font-size: 14px;
-  color: #007aff;
+  color: $color-primary;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -450,7 +456,7 @@ body.dark {
   padding: 10px;
   border-radius: 10px;
   border: none;
-  background: #007aff;
+  background: $color-primary;
   color: white;
   font-weight: 600;
 }
@@ -484,4 +490,189 @@ body.dark {
 
 .anki_export_btn:hover {
   opacity: 0.9; /* ホバーしたときに少し透けさせる */
+}
+
+// ===== カウントダウン・Google検索・保存単語数 =====
+.header_row {
+  display: grid;
+  grid-template-columns: minmax(44px, 1fr) minmax(0, auto) minmax(44px, 1fr);
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-height: 59px;
+}
+
+.header_row .app_header_title {
+  padding: 7px 0;
+}
+
+.exam_countdown {
+  text-align: center;
+  font-size: clamp(10px, 3vw, 12px);
+  line-height: 1;
+  white-space: nowrap;
+
+  time {
+    display: block;
+    margin-top: 4px;
+    color: $color-primary;
+    font-size: clamp(28px, 6vw, 34px);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    white-space: nowrap;
+
+    &.exam_countdown_date {
+      font-size: 16px;
+    }
+
+    small {
+      margin-left: 1px;
+      font-size: 10px;
+    }
+  }
+}
+
+.search_box {
+  top: var(--app-header-height, 118px);
+}
+
+.search_row {
+  display: flex;
+  gap: 8px;
+
+  .search_input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.google_search {
+  flex: 0 0 48px;
+  border: 1px solid $color-border;
+  border-radius: 14px;
+  background: $color-bg;
+  font-size: $font-lg;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+.copy_field,
+.star {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.copy_field {
+  max-width: 100%;
+  color: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.clipboard_field {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.saved_status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 10px 12px 0;
+  font-size: $font-sm;
+}
+
+.saved_progress {
+  --progress-fill: #{$color-primary};
+  --progress-track: #dfe4eb;
+  appearance: none;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 5px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--progress-track);
+
+  &::-webkit-progress-bar {
+    border-radius: inherit;
+    background: var(--progress-track);
+  }
+
+  &::-webkit-progress-value {
+    border-radius: inherit;
+    background: var(--progress-fill);
+  }
+
+  &::-moz-progress-bar {
+    border-radius: inherit;
+    background: var(--progress-fill);
+  }
+
+  &[data-band="1"] {
+    --progress-fill: #008473;
+  }
+
+  &[data-band="2"] {
+    --progress-fill: #508000;
+  }
+
+  &[data-band="3"] {
+    --progress-fill: #a96b00;
+  }
+
+  &[data-band="4"] {
+    --progress-fill: #d45500;
+  }
+
+  &[data-band="5"] {
+    --progress-fill: #d9261d;
+  }
+}
+
+#savedWarning {
+  color: #a34300;
+}
+
+.toast {
+  z-index: 30;
+  width: max-content;
+  max-width: calc(100% - 64px);
+  text-align: center;
+}
+
+body.dark {
+  .exam_countdown time,
+  .filter_header,
+  .search_box .filter_toggle {
+    color: $color-primary-light;
+  }
+
+  .google_search {
+    background: #222;
+    border-color: #444;
+  }
+
+  .saved_progress {
+    --progress-track: #343942;
+  }
+
+  #savedWarning {
+    color: #ffb67a;
+  }
 }
