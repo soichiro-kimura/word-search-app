@@ -180,6 +180,12 @@
 </div>
 <div id="toast" class="toast" role="status"></div>
 
+<dialog id="usageCheck" class="usage_check" aria-labelledby="usageCheckTitle" aria-describedby="usageCheckDescription">
+  <h2 id="usageCheckTitle">単語帳横断検索へようこそ</h2>
+  <!-- <p id="usageCheckDescription">利用状況を調べるため、初回だけクリック数を集計するリンクを経由します。</p> -->
+  <a id="usageCheckLink" href="https://mokuson.short.gy/search-words" autofocus>単語帳検索を開く</a>
+</dialog>
+
 <!-- ===== データ ===== -->
 <!-- <script src="data/yumetan0.js"></script> -->
 <script src="data/yumetan1.js"></script>
@@ -812,6 +818,32 @@ function switchTab(isMy){
     }
   }, 0);
 }
+/* ===== 初回の利用状況確認 ===== */
+function showUsageCheck(){
+  const dialog = document.getElementById("usageCheck");
+  const link = document.getElementById("usageCheckLink");
+  const storageKey = "wordSearchUsageCheck202611";
+  if (typeof dialog.showModal !== "function") return;
+
+  try {
+    if (localStorage.getItem(storageKey) === "opened") return;
+  } catch {
+    return;
+  }
+
+  dialog.addEventListener("cancel", event => event.preventDefault());
+  link.addEventListener("click", event => {
+    try {
+      localStorage.setItem(storageKey, "opened");
+    } catch {
+      // 記録できないときは、このページをそのまま使えるようにする。
+      event.preventDefault();
+    }
+    dialog.close();
+  });
+  dialog.showModal();
+}
+
 /* ===== 初期 ===== */
 loadFilterState();
 loadFilterOpen();
@@ -819,6 +851,7 @@ loadOrder();
 updateGoogleSearch();
 loadMy();
 runSearch();
+showUsageCheck();
 </script>
 </body>
 </html>

@@ -717,3 +717,51 @@ body.dark {
     color: #ffb67a;
   }
 }
+
+// ===== 初回の利用状況確認 =====
+.usage_check {
+  box-sizing: border-box;
+  width: calc(100% - 32px);
+  max-width: 380px;
+  padding: 22px;
+  border: 1px solid $color-border;
+  border-radius: $radius-main;
+  background: $color-white;
+  color: $color-text-main;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: $font-lg;
+  }
+
+  p {
+    margin: 8px 0 16px;
+    font-size: $font-sm;
+  }
+
+  a {
+    display: block;
+    padding: 10px;
+    border-radius: $radius-small;
+    background: $color-primary;
+    color: $color-white;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 700;
+
+    &:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: -4px;
+    }
+  }
+}
+
+body.dark .usage_check {
+  border-color: #444;
+  background: #222;
+  color: $color-white;
+}
