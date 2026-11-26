@@ -812,7 +812,7 @@ function switchTab(isMy){
 
   if(isMy) loadMy();
 
-  //  થોっと遅らせてから、切り替え先のスクロール位置を復元する（描画が追いつくようにするため）
+  //  ちょっと遅らせてから、切り替え先のスクロール位置を復元する（描画が追いつくようにするため）
   setTimeout(() => {
     if(isMy){
       window.scrollTo(0, myScrollPos);
