@@ -182,7 +182,7 @@
 
 <dialog id="usageCheck" class="usage_check" aria-labelledby="usageCheckTitle" aria-describedby="usageCheckDescription">
   <h2 id="usageCheckTitle">単語帳横断検索へようこそ</h2>
-  <!-- <p id="usageCheckDescription">利用状況を調べるため、初回だけクリック数を集計するリンクを経由します。</p> -->
+  <p id="usageCheckDescription">利用状況を調べるため、初回だけクリック数を集計するリンクを経由します。</p>
   <a id="usageCheckLink" href="https://mokuson.short.gy/search-words" autofocus>単語帳検索を開く</a>
 </dialog>
 
@@ -253,6 +253,7 @@ function updateGoogleSearch(){
 googleSearch.addEventListener("click", () => {
   const query = searchInput.value.trim();
   if (!query) return;
+  void copyText(query);
   const params = new URLSearchParams({q: query});
   window.open(`https://www.google.com/search?${params}`, "_blank", "noopener,noreferrer");
 });
@@ -309,8 +310,9 @@ function moveUp(btn){
   const prev = item.previousElementSibling;
   if(prev){
     item.parentNode.insertBefore(item, prev);
+    runSearch();
+    saveOrder();
   }
-  saveOrder();
 }
 
 function moveDown(btn){
@@ -318,8 +320,9 @@ function moveDown(btn){
   const next = item.nextElementSibling;
   if(next){
     item.parentNode.insertBefore(next, item);
+    runSearch();
+    saveOrder();
   }
-  saveOrder();
 }
 /* ===== フィルタ開閉 ===== */
 function toggleFilter(){
@@ -437,6 +440,10 @@ function runSearch(){
   });
 
   list.sort((a,b)=>{
+    const aOrder = order.indexOf(a.book);
+    const bOrder = order.indexOf(b.book);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
     const aWord = a.word.toLowerCase();
     const bWord = b.word.toLowerCase();
 
@@ -451,10 +458,6 @@ function runSearch(){
     if (aWord.length !== bWord.length) {
       return aWord.length - bWord.length;
     }
-
-    const aOrder = order.indexOf(a.book);
-    const bOrder = order.indexOf(b.book);
-    if (aOrder !== bOrder) return aOrder - bOrder;
 
     return aWord.localeCompare(bWord);
   });
@@ -506,11 +509,11 @@ async function copyText(text, label){
       focused?.focus({preventScroll: true});
     }
     if (!copied) {
-      showToast("コピーできませんでした");
+      if (label) showToast("コピーできませんでした");
       return;
     }
   }
-  showToast(`${label}をコピーしました`);
+  if (label) showToast(`${label}をコピーしました`);
 }
 
 function createCopyField(text, label, query){
